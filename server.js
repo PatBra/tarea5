@@ -3,10 +3,13 @@ const connectDatabase = require("./config/database");
 
 const dotenv = require("dotenv");
 
+const mongoose = require("mongoose");
+mongoose.set("strictQuery", true);
+
 // Handle Uncaught exceptions
 process.on("uncaughtException", (err) => {
   console.log(`ERROR: ${err.stack}`);
-  console.log("Servidor apagado debido a una excepcion no controlada");
+  console.log("Servidor apagado debido a un fsdjkfgrjkgbekb ");
   process.exit(1);
 });
 

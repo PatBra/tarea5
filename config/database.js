@@ -1,17 +1,4 @@
-const mongoose = require("mongoose");
-
-//const DB_URI = "mongodb://localhost:27017/cletas";
-
-/*mongoose.connect(URI, {
-  useNewUrlParser: true,
-  useCreateIndex: true,
-});
-
-const connection = mongoose.connection;
-
-connection.once("open", () => {
-  console.log("BD conectada");
-}); */
+const mongoose = require("mongoose"); 
 
 const connectDatabase = () => {
   mongoose
