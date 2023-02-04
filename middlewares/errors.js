@@ -28,6 +28,23 @@ module.exports = (err, req, res, next) => {
       error = new ErrorHandler(message, 400);
     }
 
+    // Clave duplicada
+    if (err.code === 11000) {
+      constmessage = "Llave duplicada ${object.keys(err.keyValue)} ingresada";
+    }
+
+    //error JWT invalido
+    if (err.name === "JsonWebTokenError") {
+      const message = "Invalido JSON Web Token, intentelo de nuevo...!!!";
+      error = new ErrorHandler(message, 400);
+    }
+
+    //error JWT expirado
+    if (err.name === "TokenExpiredError") {
+      const message = "JSON Web Token expirado, intentelo de nuevo...!!!";
+      error = new ErrorHandler(message, 400);
+    }
+
     res.status(error.statusCode).json({
       success: false,
       message: error.message || "Error en el servidor ",

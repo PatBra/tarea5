@@ -42,7 +42,7 @@ exports.loginUser = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler("Ingrese su email y clave", 400));
   }
 
-  // Valdiar si existe el usuario en BD
+  // Validar si existe el usuario en BD
   const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
@@ -101,7 +101,7 @@ exports.forgotPassword = catchAsyncErrors(async (req, res, next) => {
   }
 });
 
-// Resetear la clave   =>  /api/v1/password/forgot
+// Resetear la clave   =>  /api/v1/password/:token
 exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
   const resetPasswordToken = crypto
     .createHash("sha256")
@@ -129,6 +129,49 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
   sendToken(user, 200, res);
 });
 
+//obtener el usuario logeado => /api/v1/me
+exports.getUserProfile = catchAsyncErrors(async (req, res, next) => {
+  const user = await User.findById(req.user.id);
+  res.status(200).json({
+    success: true,
+    user,
+  });
+});
+
+// Actualizar o cambiar la clave => /api/v1/password/update
+exports.updatePassword = catchAsyncErrors(async (req, res, next) => {
+  const user = await User.findById(req.user.id).select("+password");
+
+  //validar perviamente la clave del usuario
+  const isMatched = await user.comparePassword(req.body.oldPassword);
+  if (!isMatched) {
+    return next(new ErrorHandler("La clave antigua es incorrecta"), 400);
+  }
+  user.password = req.body.password;
+  await user.save();
+
+  sendToken(user, 200, res);
+});
+
+// Actualizar perfil del usuario => /api/v1/me/update
+exports.updateProfile = catchAsyncErrors(async (req, res, next) => {
+  const newUserData = {
+    name: req.body.name,
+    email: req.body.email,
+  };
+
+  // Actualizar todo el avatar
+  const user = await User.findByIdAndUpdate(req.user.id, newUserData, {
+    new: true,
+    runValidators: true,
+    useFindAndModify: false,
+  });
+
+  res.status(200).json({
+    success: true,
+  });
+});
+
 // Logout user   =>   /api/v1/logout
 exports.logout = catchAsyncErrors(async (req, res, next) => {
   res.cookie("token", null, {
@@ -139,5 +182,65 @@ exports.logout = catchAsyncErrors(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Desconectado",
+  });
+});
+
+// Admin routes
+
+// Obtener todos los usuarios => /api/v1/admin/users
+
+exports.allUsers = catchAsyncErrors(async (req, res, next) => {
+  const users = await User.find();
+  res.status(200).json({
+    success: true,
+    users,
+  });
+});
+
+//Obtener usuario => /api/v1/admin/user/:id
+exports.getUserDetails = catchAsyncErrors(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    return next(
+      new ErrorHandler(`Usuario no encontrado con el Id:${req.params.id}`)
+    );
+  }
+  res.status(200).json({
+    success: true,
+    user,
+  });
+});
+
+// Actualizar perfil del usuario => /api/v1/admin/user/:id
+exports.updateUser = catchAsyncErrors(async (req, res, next) => {
+  const newUserData = {
+    name: req.body.name,
+    email: req.body.email,
+    role: req.body.role,
+  };
+
+  const user = await User.findByIdAndUpdate(req.params.id, newUserData, {
+    new: true,
+    runValidators: true,
+    useFindAndModify: false,
+  });
+
+  res.status(200).json({
+    success: true,
+  });
+});
+
+//Eliminar un usuario desde el ADMIN => /api/v1/admin/user/:id
+exports.deleteUser = catchAsyncErrors(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    return next(
+      new ErrorHandler(`Usuario no encontrado con el Id:${req.params.id}`)
+    );
+  }
+  await user.remove();
+  res.status(200).json({
+    success: true,
+    user,
   });
 });
